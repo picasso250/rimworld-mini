@@ -4,54 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mini RimWorld - Rest System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="pixel-font">
 
     <!-- 顶部资源栏 -->
-    <div class="absolute top-0 right-0 p-2 panel flex items-center space-x-6 z-10 rounded-bl-lg pointer-events-none">
-        <div class="flex items-center text-green-400 font-bold pointer-events-auto" title="库存食物">
-            <span class="text-xl mr-2">🍖</span> <span id="res-food">0</span>
+    <div class="top-resource-bar panel">
+        <div class="res-item food" title="库存食物">
+            <span class="res-icon">🍖</span> <span id="res-food">0</span>
         </div>
-        <div class="flex items-center text-yellow-600 font-bold pointer-events-auto" title="库存木材">
-            <span class="text-xl mr-2">🪵</span> <span id="res-wood">0</span>
+        <div class="res-item wood" title="库存木材">
+            <span class="res-icon">🪵</span> <span id="res-wood">0</span>
         </div>
-        <div class="flex items-center text-gray-400 font-bold pointer-events-auto" title="库存石材">
-            <span class="text-xl mr-2">🪨</span> <span id="res-stone">0</span>
+        <div class="res-item stone" title="库存石材">
+            <span class="res-icon">🪨</span> <span id="res-stone">0</span>
         </div>
-        <div class="text-xs text-gray-500 border-l border-gray-600 pl-4 pointer-events-auto">
+        <div class="game-day-info">
             Day <span id="game-day">1</span>
         </div>
     </div>
 
     <!-- 顶部头像栏 -->
-    <div id="pawn-bar-container" class="absolute top-2 left-1/2 transform -translate-x-1/2 flex z-20" onmousedown="event.stopPropagation()"></div>
+    <div id="pawn-bar-container" onmousedown="event.stopPropagation()"></div>
 
     <!-- 左下角信息栏 -->
-    <div id="info-panel" class="absolute bottom-4 left-4 w-64 panel p-4 rounded-lg z-10 hidden pointer-events-auto" onmousedown="event.stopPropagation()">
-        <h3 class="text-lg font-bold text-yellow-400 mb-2 border-b border-gray-600 pb-1" id="info-title">信息</h3>
-        <div id="info-content" class="text-sm text-gray-300 space-y-1"></div>
+    <div id="info-panel" class="info-panel panel hidden" onmousedown="event.stopPropagation()">
+        <h3 class="info-title" id="info-title">信息</h3>
+        <div id="info-content" class="info-content"></div>
     </div>
 
     <!-- 底部操作栏 -->
-    <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 p-2 panel rounded-lg z-10 pointer-events-auto" onmousedown="event.stopPropagation()">
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('select')" id="btn-select">
-            <span class="text-lg">👆</span><span>选择</span>
+    <div class="action-bar panel" onmousedown="event.stopPropagation()">
+        <button class="btn-action" onclick="setTool('select')" id="btn-select">
+            <span class="btn-icon">👆</span><span>选择</span>
         </button>
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('chop')" id="btn-chop">
-            <span class="text-lg">🪓</span><span>伐木</span>
+        <button class="btn-action" onclick="setTool('chop')" id="btn-chop">
+            <span class="btn-icon">🪓</span><span>伐木</span>
         </button>
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('mine')" id="btn-mine">
-            <span class="text-lg">⛏️</span><span>采矿</span>
+        <button class="btn-action" onclick="setTool('mine')" id="btn-mine">
+            <span class="btn-icon">⛏️</span><span>采矿</span>
         </button>
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('harvest')" id="btn-harvest">
-            <span class="text-lg">🍓</span><span>采集</span>
+        <button class="btn-action" onclick="setTool('harvest')" id="btn-harvest">
+            <span class="btn-icon">🍓</span><span>采集</span>
         </button>
         
-
-         <button class="btn-action px-3 py-2 bg-red-900 hover:bg-red-800 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="cancelJobTool()" id="btn-cancel">
-            <span class="text-lg">🚫</span><span>取消</span>
+         <button class="btn-action btn-cancel" onclick="cancelJobTool()" id="btn-cancel">
+            <span class="btn-icon">🚫</span><span>取消</span>
         </button>
     </div>
 
