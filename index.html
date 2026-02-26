@@ -271,12 +271,12 @@ class Pawn {
 
     update() {
         // 自然消耗
-        if (Math.random() < 0.005) this.hunger -= 0.5;
+        this.hunger -= 0.02;
         if (this.hunger < 0) this.hunger = 0;
         
         // 休息度消耗 (醒着的时候)
         if (this.state !== 'SLEEPING' && this.state !== 'PASSED_OUT') {
-            this.rest -= 0.03; // 约每2秒降1点
+            this.rest -= 0.01; // 约每2秒降1点
         }
 
         // 昏厥检查
