@@ -147,14 +147,6 @@
             <span class="text-lg">🍓</span><span>采集</span>
         </button>
         
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('build_warehouse')" id="btn-build_warehouse">
-            <span class="text-lg">📦</span><span>仓库</span>
-            <div class="cost-tooltip">需要: 20木材 (2x2)</div>
-        </button>
-        <button class="btn-action px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="setTool('build_tent')" id="btn-build_tent">
-            <span class="text-lg">⛺</span><span>帐篷</span>
-            <div class="cost-tooltip">需要: 10木材 (2x2)</div>
-        </button>
 
          <button class="btn-action px-3 py-2 bg-red-900 hover:bg-red-800 rounded text-xs font-bold flex flex-col items-center min-w-[60px] relative" onclick="cancelJobTool()" id="btn-cancel">
             <span class="text-lg">🚫</span><span>取消</span>
@@ -190,15 +182,13 @@ const COLORS = {
 const PAWN_NAMES = ["Alex", "Ben", "Cara", "Dave", "Eve", "Frank"];
 
 const resources = {
-    food: 20,
-    wood: 50,
+    food: 0,
+    wood: 0,
     stone: 0
 };
 
 const BUILDINGS = {
-    'warehouse': { name: '仓库', w: 2, h: 2, cost: { wood: 20 }, symbol: '📦', color: '#854d0e' },
-    'tent': { name: '帐篷', w: 2, h: 2, cost: { wood: 10 }, symbol: '⛺', color: '#10b981' },
-    'base_camp': { name: '基地', w: 2, h: 2, cost: {}, symbol: '🚩', color: '#6366f1' }
+    // 仓库和帐篷已被删除，根据用户需求，资源直接放在地上，小人在野外进食和睡眠
 };
 
 let camera = { x: 0, y: 0, zoom: 1 };
@@ -320,8 +310,11 @@ class Pawn {
                 this.calculatePath(bed.x, bed.y);
                 return;
             } else {
-                // 没有床，只能等着昏厥，或者在原地发呆
-                showFloatingText(this.x, this.y, "So tired...", "#60a5fa");
+                // 没有床，在原地睡觉
+                this.job = { type: 'SLEEP_GROUND' };
+                this.state = 'SLEEPING';
+                showFloatingText(this.x, this.y, "Sleeping on ground", "#60a5fa");
+                return;
             }
         }
 
@@ -331,12 +324,6 @@ class Pawn {
             if (foodTile) {
                 this.job = { type: 'EAT_ITEM', tile: foodTile };
                 this.calculatePath(foodTile.x, foodTile.y);
-                return;
-            }
-            if (resources.food > 0) {
-                resources.food--;
-                this.hunger = 100;
-                showFloatingText(this.x, this.y, "Nom nom", "white");
                 return;
             }
             const bushTile = findNearestObject(this, 'berry');
@@ -352,13 +339,12 @@ class Pawn {
         if (blueprintNeedsMat) {
             const matType = blueprintNeedsMat.matType;
             const bp = blueprintNeedsMat.building;
-            if (resources[matType] > 0) {
-                 const storage = findNearestBuilding(this.x, this.y, ['warehouse', 'base_camp']);
-                 if (storage) {
-                     this.job = { type: 'HAUL_BUILD', targetBuilding: bp, sourceBuilding: storage, matType: matType };
-                     this.calculatePath(storage.x, storage.y);
-                     return;
-                 }
+            // 寻找地上的材料
+            const matTile = findNearestItem(this, matType);
+            if (matTile) {
+                 this.job = { type: 'HAUL_BUILD', targetBuilding: bp, tile: matTile, matType: matType };
+                 this.calculatePath(matTile.x, matTile.y);
+                 return;
             }
         }
         
@@ -369,19 +355,7 @@ class Pawn {
             return;
         }
 
-        // 3. 搬运
-        const hasStorage = buildings.some(b => !b.isBlueprint && (b.type === 'warehouse' || b.type === 'base_camp'));
-        if (hasStorage) {
-            const haulTile = findNearestHaulable(this);
-            if (haulTile) {
-                const storage = findNearestBuilding(haulTile.x, haulTile.y, ['warehouse', 'base_camp']);
-                if (storage) {
-                    this.job = { type: 'HAUL', tile: haulTile, targetBuilding: storage };
-                    this.calculatePath(haulTile.x, haulTile.y);
-                    return;
-                }
-            }
-        }
+        // 3. 搬运 (暂时删除，因为没有仓库。资源直接留在地上)
 
         // 4. 工作
         const jobTile = findNearestJob(this);
@@ -426,17 +400,25 @@ class Pawn {
                 return;
             }
 
-            // 搬运任务
+            // 搬运任务 (分两阶段：1. 走到材料处并捡起 2. 走到建筑处)
             if (this.job && this.job.type === 'HAUL_BUILD') {
                 if (!this.carrying) {
-                    if (resources[this.job.matType] > 0) {
-                        const amount = Math.min(10, resources[this.job.matType]);
+                    // 到达材料所在格子
+                    const tile = this.job.tile;
+                    const itemIdx = tile.items.findIndex(i => i.type === this.job.matType);
+                    if (itemIdx >= 0) {
+                        const amount = Math.min(10, tile.items[itemIdx].amount);
+                        tile.items[itemIdx].amount -= amount;
+                        if (tile.items[itemIdx].amount <= 0) tile.items.splice(itemIdx, 1);
+
+                        // 更新全局资源计数
                         resources[this.job.matType] -= amount;
+
                         this.carrying = { type: this.job.matType, amount: amount };
                         this.targetX = this.job.targetBuilding.x + 0.5;
                         this.targetY = this.job.targetBuilding.y + 0.5;
                         this.state = 'MOVING';
-                        showFloatingText(this.x, this.y, "Got Material", "white");
+                        showFloatingText(this.x, this.y, "Picked up " + this.job.matType, "white");
                     } else {
                         this.job = null;
                         this.state = 'IDLE';
@@ -492,8 +474,12 @@ class Pawn {
     }
 
     doSleep() {
-        // 在床上/帐篷里，恢复快
-        this.rest += 0.4; 
+        // 在床上/帐篷里，恢复快；在地上恢复慢一些
+        let recovery = 0.4;
+        if (this.job && this.job.type === 'SLEEP_GROUND') {
+            recovery = 0.15; // 比床上慢，但比昏厥快
+        }
+        this.rest += recovery;
         if (Math.random() < 0.05) showFloatingText(this.x, this.y, "Zzz", "#60a5fa");
         
         if (this.rest >= 100) {
@@ -540,8 +526,8 @@ class Pawn {
             }
         }
         else if (this.job.type === 'HAUL' && this.carrying) {
-            resources[this.carrying.type] += this.carrying.amount;
-            showFloatingText(this.x, this.y, `Stored +${this.carrying.amount}`, "#3b82f6");
+            // 虽然禁用了 HAUL 任务，但保留逻辑以防万一
+            dropItem(Math.round(this.x), Math.round(this.y), this.carrying.type, this.carrying.amount);
             this.carrying = null;
         }
         else if (this.job.type === 'EAT_BUSH') {
@@ -552,9 +538,14 @@ class Pawn {
         else if (this.job.type === 'EAT_ITEM') {
             const foodIdx = this.job.tile.items.findIndex(i => i.type === 'food');
             if (foodIdx >= 0) {
-                this.job.tile.items[foodIdx].amount -= 5;
+                const amountConsumed = Math.min(5, this.job.tile.items[foodIdx].amount);
+                this.job.tile.items[foodIdx].amount -= amountConsumed;
                 if (this.job.tile.items[foodIdx].amount <= 0) this.job.tile.items.splice(foodIdx, 1);
+
+                // 更新全局资源计数
+                resources.food -= amountConsumed;
                 this.hunger = 100;
+                showFloatingText(this.x, this.y, "Ate food", "#22c55e");
             }
         }
         else if (this.job.type === 'chop') {
@@ -589,7 +580,11 @@ function init() {
     generateMap();
     const cx = Math.floor(MAP_WIDTH/2);
     const cy = Math.floor(MAP_HEIGHT/2);
-    placeBuilding('base_camp', cx - 1, cy - 1, true); 
+
+    // 初始资源放在地上
+    dropItem(cx, cy, 'food', 20);
+    dropItem(cx, cy + 1, 'wood', 50);
+
     spawnPawns(3, cx, cy);
     updatePawnBar();
     camera.x = (cx * TILE_SIZE) - canvas.width / 2;
@@ -648,6 +643,9 @@ function dropItem(x, y, type, amount) {
     const existing = tile.items.find(i => i.type === type);
     if (existing) existing.amount += amount;
     else tile.items.push({ type, amount });
+
+    // 增加全局资源计数
+    if (resources[type] !== undefined) resources[type] += amount;
 }
 
 // --- 查找逻辑 (AI) ---
@@ -1026,6 +1024,7 @@ function selectPawn(pawn) {
 }
 
 function updateUI() {
+    // 现在资源通过 dropItem 和 采集/消耗逻辑实时更新，无需扫描全图
     document.getElementById('res-food').innerText = resources.food;
     document.getElementById('res-wood').innerText = resources.wood;
     document.getElementById('res-stone').innerText = resources.stone;
