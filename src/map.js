@@ -2,6 +2,9 @@ export const TILE_TYPES = {
     GRASS: 0,
     WALL: 1,
     FLOOR: 2,
+    TREE: 3,
+    STONE: 4,
+    BERRY_BUSH: 5,
 };
 
 export const TILE_SIZE = 32;
@@ -15,7 +18,17 @@ export class GameMap {
         for (let y = 0; y < height; y++) {
             this.tiles[y] = [];
             for (let x = 0; x < width; x++) {
-                this.tiles[y][x] = TILE_TYPES.GRASS;
+                // Randomly place some trees and stones
+                const rand = Math.random();
+                if (rand < 0.05) {
+                    this.tiles[y][x] = TILE_TYPES.TREE;
+                } else if (rand < 0.08) {
+                    this.tiles[y][x] = TILE_TYPES.STONE;
+                } else if (rand < 0.1) {
+                    this.tiles[y][x] = TILE_TYPES.BERRY_BUSH;
+                } else {
+                    this.tiles[y][x] = TILE_TYPES.GRASS;
+                }
             }
         }
     }
@@ -37,22 +50,40 @@ export class GameMap {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 const tile = this.tiles[y][x];
-                ctx.fillStyle = this.getTileColor(tile);
+
+                // Draw background (always grass or floor)
+                ctx.fillStyle = (tile === TILE_TYPES.FLOOR) ? '#a0522d' : '#567d46';
                 ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
                 // Draw grid lines
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
                 ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                // Draw emoji for certain tiles
+                const symbol = this.getTileSymbol(tile);
+                if (symbol) {
+                    ctx.font = `${TILE_SIZE * 0.8}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(
+                        symbol,
+                        x * TILE_SIZE + TILE_SIZE / 2,
+                        y * TILE_SIZE + TILE_SIZE / 2
+                    );
+                } else if (tile === TILE_TYPES.WALL) {
+                    ctx.fillStyle = '#7a7a7a';
+                    ctx.fillRect(x * TILE_SIZE + 2, y * TILE_SIZE + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                }
             }
         }
     }
 
-    getTileColor(type) {
+    getTileSymbol(type) {
         switch (type) {
-            case TILE_TYPES.GRASS: return '#567d46';
-            case TILE_TYPES.WALL: return '#7a7a7a';
-            case TILE_TYPES.FLOOR: return '#a0522d';
-            default: return '#000';
+            case TILE_TYPES.TREE: return '🌳';
+            case TILE_TYPES.STONE: return '🪨';
+            case TILE_TYPES.BERRY_BUSH: return '🫐';
+            default: return null;
         }
     }
 }

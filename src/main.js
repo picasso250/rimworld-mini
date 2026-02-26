@@ -14,7 +14,7 @@ const pawns = [
 ];
 
 let selectedPawn = null;
-let interactionMode = 'MOVE'; // 'MOVE' or 'BUILD'
+let interactionMode = 'MOVE'; // 'MOVE', 'BUILD', 'CHOP', 'MINE'
 
 function init() {
     // Basic event listeners
@@ -50,6 +50,14 @@ function handleMouseDown(e) {
         }
     } else if (interactionMode === 'BUILD') {
         gameMap.setTile(gridX, gridY, TILE_TYPES.WALL);
+    } else if (interactionMode === 'CHOP') {
+        if (gameMap.getTile(gridX, gridY) === TILE_TYPES.TREE) {
+            gameMap.setTile(gridX, gridY, TILE_TYPES.GRASS);
+        }
+    } else if (interactionMode === 'MINE') {
+        if (gameMap.getTile(gridX, gridY) === TILE_TYPES.STONE) {
+            gameMap.setTile(gridX, gridY, TILE_TYPES.GRASS);
+        }
     }
 }
 
@@ -88,7 +96,9 @@ function updateUI() {
 window.setInteractionMode = (mode) => {
     interactionMode = mode;
     document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(mode.toLowerCase() + '-mode').classList.add('active');
+    const btnId = mode.toLowerCase() + '-mode';
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('active');
 };
 
 init();

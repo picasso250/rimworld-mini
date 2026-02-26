@@ -13,6 +13,7 @@ export class Pawn {
         this.hunger = 0;
         this.speed = 2; // Pixels per frame
         this.isSelected = false;
+        this.symbol = '🧑';
     }
 
     update(gameMap) {
@@ -43,25 +44,31 @@ export class Pawn {
     }
 
     setTarget(x, y, gameMap) {
-        // Basic check: can't move into walls
-        if (gameMap.getTile(x, y) !== TILE_TYPES.WALL) {
+        // Basic check: can't move into walls or stones
+        const tile = gameMap.getTile(x, y);
+        if (tile !== TILE_TYPES.WALL && tile !== TILE_TYPES.STONE && tile !== TILE_TYPES.TREE) {
             this.targetX = x;
             this.targetY = y;
         }
     }
 
     draw(ctx) {
-        // Draw pawn
-        ctx.fillStyle = this.isSelected ? '#ffff00' : '#ffffff';
-        ctx.beginPath();
-        ctx.arc(
+        // Draw selection highlight
+        if (this.isSelected) {
+            ctx.strokeStyle = '#ffff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.pixelX, this.pixelY, TILE_SIZE, TILE_SIZE);
+        }
+
+        // Draw pawn emoji
+        ctx.font = `${TILE_SIZE * 0.8}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+            this.symbol,
             this.pixelX + TILE_SIZE / 2,
-            this.pixelY + TILE_SIZE / 2,
-            TILE_SIZE * 0.4,
-            0,
-            Math.PI * 2
+            this.pixelY + TILE_SIZE / 2
         );
-        ctx.fill();
 
         // Draw name
         ctx.fillStyle = '#fff';
