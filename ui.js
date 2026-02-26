@@ -31,8 +31,8 @@ export function updatePawnBar() {
             wrapper.innerHTML = `
                 <div class="pawn-card-inner" id="pawn-inner-${p.id}">
                     <div style="width:24px; height:24px; border-radius:50%; background-color:${p.color}; border:2px solid rgba(0,0,0,0.5);"></div>
-                    <div class="text-[10px] font-bold mt-1 text-gray-200">${p.name}</div>
-                    <div class="text-[9px] text-gray-400" id="pawn-status-${p.id}">Idle</div>
+                    <div class="pawn-name">${p.name}</div>
+                    <div class="pawn-status" id="pawn-status-${p.id}">Idle</div>
                     <div class="bars-container">
                         <div class="health-bar"><div class="health-fill" id="pawn-health-${p.id}"></div></div>
                         <div class="rest-bar"><div class="rest-fill" id="pawn-rest-${p.id}"></div></div>
@@ -152,13 +152,13 @@ export function updateInfoPanel() {
         title.innerText = b.isBlueprint ? `Blueprint: ${b.data.name}` : `Building: ${b.data.name}`;
         if (b.isBlueprint) {
             content.innerHTML = `
-                <div class="text-blue-400">Under Construction</div>
+                <div class="text-blue">Under Construction</div>
                 <div>Progress: ${b.progress}%</div>
                 <div>Mat: ${b.delivered.wood||0}/${b.needed.wood||0} Wood</div>
             `;
         } else {
              content.innerHTML = `
-                <div class="text-green-400">Operational</div>
+                <div class="text-green">Operational</div>
                 <div>Use for Sleeping</div>
             `;
         }
